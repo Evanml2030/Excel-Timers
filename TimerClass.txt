@@ -1,0 +1,87 @@
+Option Explicit
+    
+Private Declare PtrSafe Sub QueryPerformanceCounter Lib "kernel32" _
+        (ByRef lpPerformanceCount As LARGE_INTEGER)
+        
+Private Declare PtrSafe Sub QueryPerformanceFrequency Lib "kernel32" _
+        (ByRef lpFrequency As LARGE_INTEGER)
+    
+Private Type LARGE_INTEGER
+    First32Bits As Long
+    Second32Bits As Long
+End Type
+
+Private Type TIMER_ATTRIBUTES
+    CounterInitial As Double
+    CounterNow As Double
+    PerformanceFrequency As Double
+End Type
+
+Private Const MaxValue_32Bits = 4294967296#
+Private this As TIMER_ATTRIBUTES
+    
+Private Sub Class_Initialize()
+    PerformanceFrequencyLet
+End Sub
+    
+Private Sub PerformanceFrequencyLet()
+    Dim TempFrequency As LARGE_INTEGER
+    QueryPerformanceFrequency TempFrequency
+    this.PerformanceFrequency = ParseLargeInteger(TempFrequency)
+End Sub
+    
+Public Sub TimerSet()
+    Dim TempCounterIntital As LARGE_INTEGER
+    QueryPerformanceCounter TempCounterIntital
+    this.CounterInitial = ParseLargeInteger(TempCounterIntital)
+End Sub
+    
+Public Function CheckQuarterSecondPassed() As Boolean
+    CounterNowLet
+    If ((this.CounterNow - this.CounterInitial) / this.PerformanceFrequency) >= 0.05 Then
+        CheckQuarterSecondPassed = True
+    Else
+        CheckQuarterSecondPassed = False
+    End If
+End Function
+    
+Public Sub PrintTimeElapsed()
+    CounterNowLet
+    If CounterInitalIsSet = True Then
+        Dim TimeElapsed As Double
+        TimeElapsed = (this.CounterNow - this.CounterInitial) / this.PerformanceFrequency
+        Debug.Print Format(TimeElapsed, "0.000000"); " seconds elapsed "
+                    
+        Dim TicksElapsed As Double
+        TicksElapsed = (this.CounterNow - this.CounterInitial)
+        Debug.Print Format(TicksElapsed, "#,##0"); " ticks"
+        End If
+End Sub
+
+Private Function CounterNowLet()
+    Dim TempTimeNow As LARGE_INTEGER
+    QueryPerformanceCounter TempTimeNow
+    this.CounterNow = ParseLargeInteger(TempTimeNow)
+End Function
+
+Private Function CounterInitalIsSet() As Boolean
+    If this.CounterInitial = 0 Then
+        MsgBox "Counter Initial Not Set"
+        CounterInitalIsSet = False
+    Else
+        CounterInitalIsSet = True
+    End If
+End Function
+    
+Private Function ParseLargeInteger(ByRef LargeInteger As LARGE_INTEGER) As Double
+    Dim First32Bits As Double
+    First32Bits = LargeInteger.First32Bits
+                        
+    Dim Second32Bits As Double
+    Second32Bits = LargeInteger.Second32Bits
+                        
+    If First32Bits < 0 Then First32Bits = First32Bits + MaxValue_32Bits
+    If Second32Bits < 0 Then Second32Bits = First32Bits + MaxValue_32Bits
+                        
+    ParseLargeInteger = First32Bits + (MaxValue_32Bits * Second32Bits)
+End Function
